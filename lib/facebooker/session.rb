@@ -515,7 +515,7 @@ module Facebooker
     end
     
     # New Relic tracking of API calls
-    add_method_tracer :post, 'Custom/Facebooker/API'
+    # add_method_tracer :post, 'Custom/Facebooker/API'
     
     def post(method, params = {}, use_session_key = true, &proc)
       if batch_request?
