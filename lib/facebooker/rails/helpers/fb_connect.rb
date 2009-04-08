@@ -54,7 +54,7 @@ module Facebooker
         def fb_login_button(*args)
 
           callback = args.first
-          options = args.second || {}
+          options = args[1] || {}
           options.merge!(:onlogin=>callback)if callback
 
           content_tag("fb:login-button",nil, options)
@@ -80,7 +80,7 @@ module Facebooker
         
         def fb_user_action(action, user_message = "", prompt = "", callback = nil)
           update_page do |page|
-            page.call "FB.Connect.showFeedDialog",action.template_id,action.data,action.target_ids,action.body_general,nil,"FB.RequireConnect.promptConnect",callback,prompt,user_message
+            page.call "FB.Connect.showFeedDialog",action.template_id,action.data,action.target_ids,action.body_general,nil,page.literal("FB.RequireConnect.promptConnect"),callback,prompt,user_message
           end
         end
         
