@@ -529,7 +529,7 @@ module Facebooker
     # New Relic tracking of API calls
     begin
       require "#{RAILS_ROOT}/vendor/plugins/rpm/init"
-      add_method_tracer :post, 'Custom/Facebooker/API'
+      add_method_tracer :post, 'Custom/Facebooker/#{args.first.to_s}'
     rescue
       puts "Failed to add New Relic instrumentation to Facebooker."
     end
