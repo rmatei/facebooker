@@ -516,7 +516,6 @@ module Facebooker
     
     # New Relic tracking of API calls
     # add_method_tracer :post, 'Custom/Facebooker/API'
-    
     def post(method, params = {}, use_session_key = true, &proc)
       if batch_request?
         post_without_logging(method, params, use_session_key, &proc)
@@ -525,6 +524,14 @@ module Facebooker
           post_without_logging(method, params, use_session_key, &proc)
         end
       end
+    end
+    
+    # New Relic tracking of API calls
+    begin
+      require "#{RAILS_ROOT}/vendor/plugins/rpm/init"
+      add_method_tracer :post, 'Custom/Facebooker/API'
+    rescue
+      puts "Failed to add New Relic instrumentation to Facebooker."
     end
     
     def post_file(method, params = {})
