@@ -590,6 +590,10 @@ class RailsHelperTest < Test::Unit::TestCase
     assert_equal "<fb:profile-pic size=\"small\" uid=\"1234\"></fb:profile-pic>", @h.fb_profile_pic("1234", :size => :small)
   end
 
+  def test_fb_profile_pic_with_width_and_height
+    assert_equal "<fb:profile-pic height=\"200\" uid=\"1234\" width=\"100\"></fb:profile-pic>", @h.fb_profile_pic("1234", :width => 100, :height => 200)
+  end
+
   def test_fb_profile_pic_with_invalid_size
     assert_raises(ArgumentError) {@h.fb_profile_pic("1234", :size => :mediumm)}
   end
@@ -962,6 +966,20 @@ class RailsHelperTest < Test::Unit::TestCase
     end
     assert @h.output_buffer =~ /Body Content/
   end
+
+  def test_init_fb_connect_no_options
+    assert ! @h.init_fb_connect.match(/Element.observe\(window,'load',/)
+  end
+  
+  def test_init_fb_connect_with_options_js_jquery
+    assert ! @h.init_fb_connect(:js => :jquery).match(/\$\(document\).ready\(/)
+  end
+  
+  def test_init_fb_connect_with_features_and_options_js_jquery
+    assert @h.init_fb_connect("XFBML", :js => :jquery).match(/XFBML.*/)
+    assert @h.init_fb_connect("XFBML", :js => :jquery).match(/\$\(document\).ready\(/)
+  end
+
   
   def test_fb_login_and_redirect
     assert_equal @h.fb_login_and_redirect("/path"),"<fb:login-button onlogin=\"window.location.href = &quot;/path&quot;;\"></fb:login-button>"
