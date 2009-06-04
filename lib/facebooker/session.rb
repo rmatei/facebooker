@@ -519,13 +519,7 @@ module Facebooker
         result
       end
     end
-<<<<<<< HEAD:lib/facebooker/session.rb
     
-    # New Relic tracking of API calls
-    # add_method_tracer :post, 'Custom/Facebooker/API'
-=======
-
->>>>>>> b62fc794c3324d294117c8d608d9d16fe4dcbdb0:lib/facebooker/session.rb
     def post(method, params = {}, use_session_key = true, &proc)
       if batch_request?
         post_without_logging(method, params, use_session_key, &proc)
@@ -535,7 +529,6 @@ module Facebooker
         end
       end
     end
-<<<<<<< HEAD:lib/facebooker/session.rb
     
     # New Relic tracking of API calls
     begin
@@ -545,9 +538,6 @@ module Facebooker
       puts "Failed to add New Relic instrumentation to Facebooker."
     end
     
-=======
-
->>>>>>> b62fc794c3324d294117c8d608d9d16fe4dcbdb0:lib/facebooker/session.rb
     def post_file(method, params = {})
       base = params.delete(:base)
       Logging.log_fb_api(method, params) do
