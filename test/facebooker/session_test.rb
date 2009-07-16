@@ -29,12 +29,14 @@ class Facebooker::SessionTest < Test::Unit::TestCase
 
   def test_if_keys_are_not_available_via_environment_then_they_are_gotten_from_a_file
     ENV['FACEBOOK_API_KEY'], ENV['FACEBOOK_SECRET_KEY'] = nil
+    Facebooker.instance_variable_set('@facebooker_configuration', nil)
     flexmock(File).should_receive(:read).with(File.expand_path("~/.facebookerrc")).once.and_return('{:api => "foo"}')
     assert_equal('foo', Facebooker::Session.api_key)
   end
 
   def test_if_environment_and_file_fail_to_match_then_an_exception_is_raised
     ENV['FACEBOOK_API_KEY'], ENV['FACEBOOK_SECRET_KEY'] = nil
+    Facebooker.instance_variable_set('@facebooker_configuration', nil)
     flexmock(File).should_receive(:read).with(File.expand_path("~/.facebookerrc")).once.and_return {raise Errno::ENOENT, "No such file"}
     assert_raises(Facebooker::Session::ConfigurationMissing) {
       Facebooker::Session.api_key
@@ -160,6 +162,15 @@ class Facebooker::SessionTest < Test::Unit::TestCase
     assert_equal "Ari Steinberg", response.first.name
   end
 
+  def test_can_fql_multiquery_for_users_and_pictures
+    @session = Facebooker::Session.create(ENV['FACEBOOK_API_KEY'], ENV['FACEBOOK_SECRET_KEY'])
+    mock_http = establish_session
+    mock_http.should_receive(:post_form).and_return(example_fql_multiquery_xml).once.ordered(:posts)
+    response = @session.fql_multiquery({:query => 'SELECT name, pic FROM user WHERE uid=211031 OR uid=4801660'})
+    assert_kind_of Array, response["query1"]
+    assert_kind_of Facebooker::User, response["query1"].first
+    assert_equal "Ari Steinberg", response["query1"].first.name
+  end
 
   def test_can_send_notification_with_object
     @session = Facebooker::Session.create(ENV['FACEBOOK_API_KEY'], ENV['FACEBOOK_SECRET_KEY'])
@@ -281,6 +292,33 @@ class Facebooker::SessionTest < Test::Unit::TestCase
   end
 
   private
+
+  def example_fql_multiquery_xml
+    <<-XML
+<?xml version="1.0" encoding="UTF-8"?>
+<fql_multiquery_response xmlns="http://api.facebook.com/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://api.facebook.com/1.0/ http://api.facebook.com/1.0/facebook.xsd" list="true">
+  <fql_result>
+    <name>query1</name>
+    <results list="true">
+      <user>
+        <name>Ari Steinberg</name>
+        <uid>46903192</uid>
+        <rsvp_status xsi:nil="true"/>
+      </user>
+    </results>
+  </fql_result>
+  <fql_result>
+    <name>query2</name>
+    <results list="true">
+      <user>
+        <name>Lisa Petrovskaia</name>
+        <pic xsi:nil="true"/>
+      </user>
+    </results>
+  </fql_result>
+</fql_multiquery_response>
+XML
+  end
 
   def example_groups_get_xml
     <<-XML
@@ -576,30 +614,6 @@ class Facebooker::SessionTest < Test::Unit::TestCase
   end
 end
 
-class PostMethodTest < Test::Unit::TestCase
-
-  def setup
-    Facebooker.use_curl = true
-    Facebooker::Parser.stubs(:parse)
-    @uri = URI.parse("http://api.facebook.com/api")
-    @service = Facebooker::Service.new("a","b","c")
-    @service.stubs("url").returns(@uri)
-  end
-
-  def teardown
-    Facebooker.use_curl = false
-  end
-
-  def test_use_curl_makes_post_with_curl
-    @service.expects(:post_form_with_curl).with(@uri,{:method=>"a"})
-    @service.post(:method=>"a")
-  end
-
-  def test_use_curl_makes_post_file_use_curl_with_multipart
-    @service.expects(:post_form_with_curl).with(@uri,{:method=>"a"},true)
-    @service.post_file(:method=>"a")
-  end
-end
 
 class CanvasSessionTest < Test::Unit::TestCase
   def setup

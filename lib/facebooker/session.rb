@@ -72,6 +72,7 @@ module Facebooker
 
     attr_writer :auth_token
     attr_reader :session_key
+    attr_reader :secret_from_session
 
     def self.create(api_key=nil, secret_key=nil)
       api_key ||= self.api_key
@@ -181,10 +182,14 @@ module Facebooker
       !@session_key.nil? && !expired?
     end
 
-    def secure!
-      response = post 'facebook.auth.getSession', :auth_token => auth_token
+    def secure!(args = {})
+      response = post 'facebook.auth.getSession', :auth_token => auth_token, :generate_session_secret => args[:generate_session_secret] ? "1" : "0"
       secure_with!(response['session_key'], response['uid'], response['expires'], response['secret'])
     end    
+    
+    def secure_with_session_secret!
+      self.secure!(:generate_session_secret => true)
+    end
 
     def secure_with!(session_key, uid = nil, expires = nil, secret_from_session = nil)
       @session_key = session_key
@@ -193,30 +198,55 @@ module Facebooker
       @secret_from_session = secret_from_session
     end
 
+    def fql_build_object(type, hash)
+      case type
+      when 'user'
+        user = User.new
+        user.session = self
+        user.populate_from_hash!(hash)
+        user
+      when 'photo'
+        Photo.from_hash(hash)
+      when 'page'
+        Page.from_hash(hash)
+      when 'page_admin'
+        Page.from_hash(hash)
+      when 'group'
+        Group.from_hash(hash)
+      when 'event_member'
+        Event::Attendance.from_hash(hash)
+      else
+        hash
+      end
+    end
+
     def fql_query(query, format = 'XML')
       post('facebook.fql.query', :query => query, :format => format) do |response|
         type = response.shift
         return [] if type.nil?
         response.shift.map do |hash|
-          case type
-          when 'user'
-            user = User.new
-            user.session = self
-            user.populate_from_hash!(hash)
-            user
-          when 'photo'
-            Photo.from_hash(hash)
-          when 'page'
-            Page.from_hash(hash)
-          when 'page_admin'
-            Page.from_hash(hash)
-          when 'event_member'
-            Event::Attendance.from_hash(hash)
-          else
-            hash
-          end
+          fql_build_object(type, hash)
         end
       end
+    end
+
+    def fql_multiquery(queries, format = 'XML')
+      results = {}
+      post('facebook.fql.multiquery', :queries => queries.to_json, :format => format) do |responses|
+        responses.each do |response|
+          name = response.shift
+          response = response.shift
+          type = response.shift
+          value = [] 
+          unless type.nil?
+            value = response.shift.map do |hash|
+              fql_build_object(type, hash)
+            end
+          end
+          results[name] = value
+        end
+      end
+      results
     end
 
     def user
@@ -270,8 +300,10 @@ module Facebooker
 
     # Takes page_id and uid, returns true if uid is a fan of the page_id
     def is_fan(page_id, uid)
-      post('facebook.pages.isFan', :page_id=>page_id, :uid=>uid)
+      puts "Deprecated. Use Page#user_is_fan? instead"
+      Page.new(page_id).user_is_fan?(uid)
     end    
+
 
     #
     # Returns a proxy object for handling calls to Facebook cached items
@@ -388,10 +420,10 @@ module Facebooker
 
     ##
     # Send email to as many as 100 users at a time
-    def send_email(user_ids, subject, text, fbml = nil) 			
+    def send_email(user_ids, subject, text, fbml = nil)       
       user_ids = Array(user_ids)
       params = {:fbml => fbml, :recipients => user_ids.map{ |id| User.cast_to_facebook_id(id)}.join(','), :text => text, :subject => subject} 
-      post 'facebook.notifications.sendEmail', params
+      post 'facebook.notifications.sendEmail', params, false
     end
 
     # Only serialize the bare minimum to recreate the session.
