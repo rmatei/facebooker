@@ -38,13 +38,9 @@ module Facebooker
       if File.exist?(facebooker_yaml_file)
         @raw_facebooker_configuration = YAML.load(ERB.new(File.read(facebooker_yaml_file)).result)
         if defined? RAILS_ENV
-<<<<<<< HEAD:lib/facebooker.rb
-          @raw_facebooker_configuration = @raw_facebooker_configuration[RAILS_ENV]
-=======
           config = YAML.load_file(facebooker_yaml_file)[RAILS_ENV] 
         else
           config = YAML.load_file(facebooker_yaml_file)           
->>>>>>> b61851e... A working and tested version of facebooker handling multiple apps at once.:lib/facebooker.rb
         end
         apply_configuration(config)
       end
