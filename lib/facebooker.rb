@@ -27,7 +27,6 @@ require 'digest/md5'
 module Facebooker
 
     @facebooker_configuration = {}
-    @raw_facebooker_configuration = {}
     @current_adapter = nil
     @set_asset_host_to_callback_url = true
     @path_prefix = nil
@@ -39,10 +38,15 @@ module Facebooker
       if File.exist?(facebooker_yaml_file)
         @raw_facebooker_configuration = YAML.load(ERB.new(File.read(facebooker_yaml_file)).result)
         if defined? RAILS_ENV
+<<<<<<< HEAD:lib/facebooker.rb
           @raw_facebooker_configuration = @raw_facebooker_configuration[RAILS_ENV]
+=======
+          config = YAML.load_file(facebooker_yaml_file)[RAILS_ENV] 
+        else
+          config = YAML.load_file(facebooker_yaml_file)           
+>>>>>>> b61851e... A working and tested version of facebooker handling multiple apps at once.:lib/facebooker.rb
         end
-        Thread.current[:fb_api_config] = @raw_facebooker_configuration unless Thread.current[:fb_api_config]
-        apply_configuration(@raw_facebooker_configuration)
+        apply_configuration(config)
       end
     end
 
@@ -68,6 +72,7 @@ module Facebooker
       @facebooker_configuration
     end
 
+<<<<<<< HEAD:lib/facebooker.rb
     def with_application(api_key, &block)
       config = fetch_config_for( api_key )
 
@@ -104,6 +109,8 @@ module Facebooker
       return false
     end
 
+=======
+>>>>>>> b61851e... A working and tested version of facebooker handling multiple apps at once.:lib/facebooker.rb
     # TODO: This should be converted to attr_accessor, but we need to
     # get all the require statements at the top of the file to work.
 
