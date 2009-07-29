@@ -1,4 +1,4 @@
-unless defined?(ActiveSupport) and defined?(ActiveSupport::JSON)
+if true #unless defined?(ActiveSupport) and defined?(ActiveSupport::JSON)
   require 'json'
   module Facebooker
     def self.json_decode(str)
