@@ -6,12 +6,12 @@ require 'rack/mock'
 class Rack::FacebookTest < Test::Unit::TestCase
   
   def setup
-    flexmock(Facebooker).should_receive(:secret_key).and_return('secret')
+    @secret_key = 'secret'
     @app = lambda do |env|
       @env = env
       Rack::Response.new().to_a
     end
-    @facebook = Rack::Facebook.new(@app)
+    @facebook = Rack::Facebook.new(@app, @secret_key)
   end
   
   def params(p)
@@ -47,13 +47,13 @@ class Rack::FacebookTest < Test::Unit::TestCase
   end
   
   def test_skips_with_false_condition
-    @facebook = Rack::Facebook.new(@app) { false }
+    @facebook = Rack::Facebook.new(@app, @secret_key) { false }
     response = app.post("/", :input => params(:fb_sig_user => 'ignored'))
     assert_equal 200, response.status
   end
   
   def test_verifies_with_true_condition
-    @facebook = Rack::Facebook.new(@app) { true }
+    @facebook = Rack::Facebook.new(@app, @secret_key) { true }
     response = app.post("/", :input => params(:fb_sig_user => 'ignored'))
     assert_equal 400, response.status
   end
