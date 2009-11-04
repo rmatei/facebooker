@@ -238,11 +238,15 @@ module Facebooker
       # Use this tag on FBML pages instead of retrieving the user's info and rendering the name explicitly.
       #
       def fb_name(user, options={})
-        options = options.dup
-        options.transform_keys!(FB_NAME_OPTION_KEYS_TO_TRANSFORM)
-        options.assert_valid_keys(FB_NAME_VALID_OPTION_KEYS)
-        options.merge!(:uid => cast_to_facebook_id(user))
-        content_tag("fb:name",nil, stringify_vals(options))
+        unless user == 0
+          options = options.dup
+          options.transform_keys!(FB_NAME_OPTION_KEYS_TO_TRANSFORM)
+          options.assert_valid_keys(FB_NAME_VALID_OPTION_KEYS)
+          options.merge!(:uid => cast_to_facebook_id(user))
+          content_tag("fb:name",nil, stringify_vals(options))
+        else
+          Prompt.get(:from_anonymous)
+        end
       end
 
       FB_NAME_OPTION_KEYS_TO_TRANSFORM = {:first_name_only => :firstnameonly, 
